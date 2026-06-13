@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="theme-color" content="#07090e" />
+    <meta
+      name="description"
+      content="Pulse — a fast, private fitness tracker for workouts, progress, body metrics, and goals."
+    />
+    <title>Pulse — Fitness Tracker</title>
+    <script>
+      // Apply saved theme before first paint to avoid a flash of the wrong mode.
+      try {
+        var raw = localStorage.getItem('pulse:data');
+        var theme = raw ? JSON.parse(raw).profile?.theme : null;
+        document.documentElement.classList.toggle('dark', theme !== 'light');
+      } catch (e) {
+        /* default dark stays */
+      }
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
