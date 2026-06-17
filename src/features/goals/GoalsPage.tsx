@@ -272,7 +272,7 @@ export default function GoalsPage() {
       />
 
       {data.goals.length > 0 ? (
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {data.goals.map((goal) => {
             const progress = goalProgress(goal, ctx)
             const meta = GOAL_TYPE_META[goal.type]
