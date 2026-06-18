@@ -52,12 +52,14 @@ export function AreaChart({
   color = 'var(--c-accent)',
   formatValue = (v: number) => String(Math.round(v)),
   showFirstLastLabels = true,
+  minValue,
 }: {
   points: AreaPoint[]
   height?: number
   color?: string
   formatValue?: (v: number) => string
   showFirstLastLabels?: boolean
+  minValue?: number
 }) {
   const { ref, width } = useElementSize<HTMLDivElement>()
   const gradientId = useId()
@@ -73,7 +75,7 @@ export function AreaChart({
       max += 1
     }
     const range = max - min
-    min -= range * 0.12
+    min = minValue ?? min - range * 0.12
     max += range * 0.08
     const innerW = width - AXIS_W - PAD_X * 2
     const innerH = height - PAD_TOP - PAD_BOTTOM
@@ -82,15 +84,15 @@ export function AreaChart({
     )
     const py = points.map((p) => PAD_TOP + (1 - (p.value - min) / (max - min)) * innerH)
     return { px, py, min, max }
-  }, [width, height, points])
+  }, [width, height, points, minValue])
 
   const gridLines = useMemo(() => {
     if (!layout) return []
     const lines: { y: number; value: number }[] = []
     const steps = 3
     for (let i = 0; i <= steps; i++) {
-      const value = layout.min + ((layout.max - layout.min) * i) / steps
-      const y = PAD_TOP + (1 - i / steps) * (height - PAD_TOP - PAD_BOTTOM)
+      const value = layout.max - ((layout.max - layout.min) * i) / steps
+      const y = PAD_TOP + (i / steps) * (height - PAD_TOP - PAD_BOTTOM)
       lines.push({ y, value })
     }
     return lines

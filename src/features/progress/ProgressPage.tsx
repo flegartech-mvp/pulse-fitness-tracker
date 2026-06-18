@@ -263,6 +263,7 @@ function TrainingSection() {
             }))}
             color="var(--c-violet)"
             formatValue={(v) => formatNumber(v)}
+            minValue={0}
           />
         </div>
       </Card>
