@@ -1,10 +1,10 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Download, Moon, RefreshCcw, Scale, Sun, Trash2 } from 'lucide-react'
-import type { ActivityLevel, TrainingFocus } from '@/types'
+import { Download, Moon, RefreshCcw, Scale, Sun, Trash2, Upload } from 'lucide-react'
+import type { ActivityLevel, AppData, TrainingFocus } from '@/types'
 import { useAppData, useProfile } from '@/state/AppDataContext'
 import { useToast } from '@/state/ToastContext'
-import { exportFileName } from '@/lib/storage'
+import { exportFileName, parseAppDataJson } from '@/lib/storage'
 import { formatWeight, heightInUnit, heightToCm } from '@/lib/units'
 import { latestMetric } from '@/lib/stats'
 import { LIMITS, parsePositiveInt, parsePositiveNumber, validateProfileName } from '@/lib/validation'
@@ -201,10 +201,13 @@ function PreferencesSection() {
 }
 
 function DataSection() {
-  const { data, exportJson, loadDemoData, clearAllData } = useAppData()
+  const { data, exportJson, loadDemoData, clearAllData, replaceData } = useAppData()
   const { toast } = useToast()
+  const fileRef = useRef<HTMLInputElement>(null)
   const [confirmDemo, setConfirmDemo] = useState(false)
   const [confirmClear, setConfirmClear] = useState(false)
+  const [pendingImport, setPendingImport] = useState<AppData | null>(null)
+  const [importError, setImportError] = useState<string | null>(null)
 
   function download() {
     const blob = new Blob([exportJson()], { type: 'application/json' })
@@ -212,12 +215,36 @@ function DataSection() {
     const a = document.createElement('a')
     a.href = url
     a.download = exportFileName()
+    a.rel = 'noopener'
+    document.body.append(a)
     a.click()
-    URL.revokeObjectURL(url)
+    a.remove()
+    window.setTimeout(() => URL.revokeObjectURL(url), 0)
     toast({ tone: 'success', title: 'Data exported', description: 'A JSON file with everything was downloaded.' })
   }
 
+  async function prepareImport(file: File | undefined) {
+    if (!file) return
+    if (file.size > 5 * 1024 * 1024) {
+      setImportError('Choose a Pulse export smaller than 5 MB.')
+      return
+    }
+    try {
+      const parsed = parseAppDataJson(await file.text())
+      setPendingImport(parsed)
+      setImportError(null)
+    } catch (error) {
+      setPendingImport(null)
+      setImportError(error instanceof Error ? error.message : 'That file is not a valid Pulse export.')
+    } finally {
+      if (fileRef.current) fileRef.current.value = ''
+    }
+  }
+
   const counts = `${data.workouts.length} workouts · ${data.metrics.length} weight entries · ${data.goals.length} goals`
+  const pendingCounts = pendingImport
+    ? `${pendingImport.workouts.length} workouts, ${pendingImport.metrics.length} weight entries, ${pendingImport.goals.length} goals, and ${pendingImport.customExercises.length} custom exercises`
+    : ''
 
   return (
     <Card>
@@ -231,6 +258,28 @@ function DataSection() {
           <Button onClick={download}>
             <Download className="size-4" aria-hidden />
             Export JSON
+          </Button>
+        </div>
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-edge pt-4">
+          <div>
+            <p className="text-sm font-semibold text-ink">Import data</p>
+            <p className="text-xs text-soft">Restore a Pulse JSON export on this browser.</p>
+            {importError ? (
+              <p className="mt-1 text-xs text-danger" role="alert">
+                {importError}
+              </p>
+            ) : null}
+          </div>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="application/json,.json"
+            className="sr-only"
+            onChange={(event) => void prepareImport(event.target.files?.[0])}
+          />
+          <Button onClick={() => fileRef.current?.click()}>
+            <Upload className="size-4" aria-hidden />
+            Import JSON
           </Button>
         </div>
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-edge pt-4">
@@ -266,6 +315,20 @@ function DataSection() {
           toast({ tone: 'success', title: 'Demo data loaded' })
         }}
         onCancel={() => setConfirmDemo(false)}
+      />
+      <ConfirmDialog
+        open={Boolean(pendingImport)}
+        title="Import this data?"
+        body={`This replaces your current local data with ${pendingCounts}. Export first if you want a backup.`}
+        confirmLabel="Import data"
+        onConfirm={() => {
+          if (pendingImport) {
+            replaceData(pendingImport)
+            toast({ tone: 'success', title: 'Data imported', description: 'Your Pulse export has been restored.' })
+          }
+          setPendingImport(null)
+        }}
+        onCancel={() => setPendingImport(null)}
       />
       <ConfirmDialog
         open={confirmClear}

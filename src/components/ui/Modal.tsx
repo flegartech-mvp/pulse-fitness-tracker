@@ -14,24 +14,64 @@ export interface ModalProps {
   size?: 'md' | 'lg'
 }
 
+const FOCUSABLE_SELECTOR = [
+  'a[href]',
+  'button:not([disabled])',
+  'textarea:not([disabled])',
+  'input:not([disabled])',
+  'select:not([disabled])',
+  '[tabindex]:not([tabindex="-1"])',
+].join(',')
+
 /**
  * Accessible modal: centered dialog on desktop, bottom sheet on mobile.
- * Closes on Escape and backdrop click; focuses itself on open.
+ * Closes on Escape and backdrop click; traps focus while open.
  */
 export function Modal({ open, onClose, title, subtitle, children, footer, size = 'md' }: ModalProps) {
   const panelRef = useRef<HTMLDivElement>(null)
+  const previousFocusRef = useRef<HTMLElement | null>(null)
 
   useEffect(() => {
     if (!open) return
+    previousFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
+      if (e.key === 'Escape') {
+        onClose()
+        return
+      }
+      if (e.key !== 'Tab') return
+      const panel = panelRef.current
+      if (!panel) return
+      const focusable = Array.from(panel.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)).filter(
+        (element) => element.offsetParent !== null || element === document.activeElement,
+      )
+      if (focusable.length === 0) {
+        e.preventDefault()
+        panel.focus()
+        return
+      }
+      const first = focusable[0]!
+      const last = focusable.at(-1)!
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault()
+        last.focus()
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault()
+        first.focus()
+      }
     }
     document.addEventListener('keydown', onKey)
     document.body.style.overflow = 'hidden'
-    panelRef.current?.focus()
+    window.requestAnimationFrame(() => {
+      const panel = panelRef.current
+      const autofocus = panel?.querySelector<HTMLElement>('[autofocus]')
+      const first = panel?.querySelector<HTMLElement>(FOCUSABLE_SELECTOR)
+      ;(autofocus ?? first ?? panel)?.focus()
+    })
     return () => {
       document.removeEventListener('keydown', onKey)
       document.body.style.overflow = ''
+      previousFocusRef.current?.focus()
     }
   }, [open, onClose])
 

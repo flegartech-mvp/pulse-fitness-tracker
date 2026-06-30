@@ -56,6 +56,7 @@ describe('app smoke', () => {
     renderApp('/settings')
     expect(await screen.findByRole('heading', { name: 'Settings' })).toBeInTheDocument()
     expect(await screen.findByText('Export data')).toBeInTheDocument()
+    expect(await screen.findByText('Import data')).toBeInTheDocument()
   })
 
   it('shows a friendly 404 for unknown routes', async () => {

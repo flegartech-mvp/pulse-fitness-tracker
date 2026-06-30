@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom/vitest'
-import { configure } from '@testing-library/react'
+import { cleanup, configure } from '@testing-library/react'
+import { afterEach } from 'vitest'
 
 // Lazy-loaded routes can take a moment when test files run in parallel.
 configure({ asyncUtilTimeout: 5000 })
@@ -19,3 +20,7 @@ if (typeof globalThis.ResizeObserver === 'undefined') {
 if (typeof window !== 'undefined') {
   window.scrollTo = () => {}
 }
+
+afterEach(() => {
+  cleanup()
+})

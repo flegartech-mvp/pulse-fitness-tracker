@@ -42,6 +42,7 @@ export interface AppDataApi {
 
   loadDemoData: () => void
   clearAllData: () => void
+  replaceData: (next: AppData) => void
   exportJson: () => string
   dismissWelcome: () => void
 }
@@ -156,6 +157,7 @@ export function AppDataProvider({
           profile: { ...(d.profile ?? defaultProfile()) },
           meta: { seededDemo: false, welcomeDismissed: true },
         })),
+      replaceData: (next) => update(() => next),
       exportJson: () => JSON.stringify(data, null, 2),
       dismissWelcome: () => update((d) => ({ ...d, meta: { ...d.meta, welcomeDismissed: true } })),
     }),

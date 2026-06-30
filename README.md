@@ -22,8 +22,8 @@ workout logger. It was replaced with a complete rewrite because:
   demo flows) and missing the core of a fitness tracker: exercise library, body metrics,
   progress charts, goals, units, a real dashboard.
 
-The original code is preserved untouched in [`legacy/`](legacy/README.md). Ideas carried over:
-the rest-day-friendly 48-hour streak rule, training-volume math, and input validation limits.
+The old Expo/Firebase source is not part of the release tree. Ideas carried over: the
+rest-day-friendly 48-hour streak rule, training-volume math, and input validation limits.
 
 ## Features
 
@@ -43,7 +43,7 @@ the rest-day-friendly 48-hour streak rule, training-volume math, and input valid
 - **Goals** — body weight, strength (per lift), consistency (sessions/week), endurance (cardio
   minutes/week). Progress is computed from real activity, never self-reported.
 - **Profile & settings** — name/age/height/activity level/focus, kg ↔ lb and cm ↔ in units
-  (applied instantly everywhere), dark/light theme, JSON export, demo-data reset, clear-all.
+  (applied instantly everywhere), dark/light theme, JSON export/import, demo-data reset, clear-all.
 - **Polish** — loading skeletons (code-split routes), empty states everywhere, error boundary,
   inline form validation, toasts, custom charts (no chart library), accessible dialogs and
   controls, safe-area-aware bottom navigation on mobile.
@@ -107,8 +107,8 @@ Design decisions worth knowing:
 
 ## Known limitations
 
-- Single device / single browser profile — no sync, no accounts (export/import via JSON only;
-  import UI not built yet).
+- Single device / single browser profile — no sync or accounts. Use Settings → Data to export
+  and import JSON backups manually.
 - Calorie figures are MET-based estimates, not measurements.
 - Rest timer doesn't fire a notification/sound when it ends; timers don't run when the tab is
   closed (elapsed time is still correct — it's computed from `startedAt`).

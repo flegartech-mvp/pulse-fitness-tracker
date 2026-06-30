@@ -25,4 +25,4 @@ Node: 22+ (CI), verified on 24. Output dir: `dist`.
 None required. `.env.example` only lists *optional future* `VITE_` vars (analytics, remote API). Any `VITE_`-prefixed var is **client-visible** — never put secrets there.
 
 ## Known limitations
-- All data is local to the browser/device; clearing site data wipes it. Export/import (Settings → Export data) is the backup mechanism.
+- All data is local to the browser/device; clearing site data wipes it. Export/import (Settings → Data) is the backup and restore mechanism.

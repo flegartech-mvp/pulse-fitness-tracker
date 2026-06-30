@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { LocalStorageAdapter, MemoryAdapter, STORAGE_KEY, exportFileName } from '@/lib/storage'
+import { LocalStorageAdapter, MemoryAdapter, STORAGE_KEY, exportFileName, parseAppDataJson } from '@/lib/storage'
 import { emptyAppData } from '@/types'
 import { buildDemoData } from '@/data/demoData'
 
@@ -35,6 +35,21 @@ describe('LocalStorageAdapter', () => {
     expect(new LocalStorageAdapter().load()).toBeNull()
   })
 
+  it('drops malformed nested records instead of crashing', () => {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        ...emptyAppData(),
+        workouts: [{ id: 'bad', name: 'Bad workout', status: 'surprise', createdAt: 'now', exercises: [] }],
+        customExercises: [{ id: 'bad-custom' }],
+      }),
+    )
+    const loaded = new LocalStorageAdapter().load()
+    expect(loaded).not.toBeNull()
+    expect(loaded?.workouts).toEqual([])
+    expect(loaded?.customExercises).toEqual([])
+  })
+
   it('clears stored data', () => {
     const adapter = new LocalStorageAdapter()
     adapter.save(emptyAppData())
@@ -57,5 +72,16 @@ describe('MemoryAdapter', () => {
 describe('exportFileName', () => {
   it('formats a dated filename', () => {
     expect(exportFileName(new Date(2026, 5, 12))).toBe('pulse-export-20260612.json')
+  })
+})
+
+describe('parseAppDataJson', () => {
+  it('parses a Pulse export', () => {
+    const data = buildDemoData()
+    expect(parseAppDataJson(JSON.stringify(data)).workouts.length).toBe(data.workouts.length)
+  })
+
+  it('rejects non-Pulse JSON', () => {
+    expect(() => parseAppDataJson(JSON.stringify({ hello: 'world' }))).toThrow(/missing required/i)
   })
 })
